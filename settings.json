@@ -1,0 +1,27 @@
+{
+  "_comment": "csbench settings file — all fields may be overridden via CLI flags in run.sh",
+
+  "model": {
+    "circuit": "random_rx",
+    "n_qubits": 6,
+    "depth": 4,
+    "observable": null,
+    "kwargs": {}
+  },
+
+  "execution": {
+    "engines": ["tn", "sv"],
+    "n_runs": 20,
+    "max_bond_dimension": 32
+  },
+
+  "sweep": {
+    "n_qubits": [4, 6, 8, 10, 12],
+    "depth":    [2, 4, 8]
+  },
+
+  "output": {
+    "filename": "results/benchmark.jsonl",
+    "format":   "jsonl"
+  }
+}

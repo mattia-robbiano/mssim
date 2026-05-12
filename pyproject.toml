@@ -1,0 +1,36 @@
+[project]
+name = "mssim"
+version = "0.1.0"
+description = "Multi System Simulator"
+authors = [{ name = "MR^2" }]
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "mpstab",
+    "numpy>=2.2.6",
+    "qibo>=0.2.19",
+    "qibojit>=0.1.10",
+    "qiskit>=2.4.1",
+    "quimb>=1.11.2",
+    "scipy>=1.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.0",
+    "pytest>=8.3.0",
+    "ipykernel>=7.2.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+mpstab = { path = "../mpstab", editable = true }
