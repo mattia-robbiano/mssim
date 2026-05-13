@@ -55,7 +55,7 @@ class CircuitModel:
     n_qubits: int
     depth: int
     qasm: str
-    observable: list[str]
+    observable: str
     n_params: int
     parameter_sampler: Callable[[], list[float]] = field(default=None,repr=False)
     metadata: dict[str, Any] = field(default_factory=dict)

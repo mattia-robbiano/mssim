@@ -49,7 +49,7 @@ def build_kicked_ising(
     J: float = 1.0, 
     h: float = 0.5, 
     b: float = 0.5,
-    observable: list[str] | None = None,
+    observable: str | None = None,
 ) -> CircuitModel:
     """
     Generates a CircuitModel for the forward-time Kicked Ising Floquet circuit.
@@ -72,7 +72,7 @@ def build_kicked_ising(
         raise ValueError("The Floquet circuit requires at least 2 qubits.")
     
     if observable is None:
-        observable = ["Z"] * n_qubits
+        observable = "Z" * n_qubits
 
     lines = [_qasm_header(n_qubits)]
     
@@ -132,7 +132,7 @@ def build_ising(
     J: float = 1.0,
     h: float = 0.5,
     dt: float = 0.1,
-    observable: list[str] | None = None,
+    observable: str | None = None,
     **kwargs: Any,
 ) -> CircuitModel:
     """
@@ -149,7 +149,7 @@ def build_ising(
         Defaults to Z on qubit 0.
     """
     if observable is None:
-        observable = ["Z" if i == 0 else "I" for i in range(n_qubits)]
+        observable = "Z" * n_qubits
 
     lines = [_qasm_header(n_qubits)]
     # Initial |+⟩^n state
@@ -188,7 +188,7 @@ def build_ising(
 def build_hardware_efficient(
     n_qubits: int,
     depth: int,
-    observable: list[str] | None = None,
+    observable: str | None = None,
     **kwargs: Any,
 ) -> CircuitModel:
     """
@@ -205,7 +205,7 @@ def build_hardware_efficient(
         Defaults to all-Z.
     """
     if observable is None:
-        observable = ["Z"] * n_qubits
+        observable = "Z" * n_qubits
 
     lines = [_qasm_header(n_qubits)]
     n_params = n_qubits * (depth + 1)  # +1 for the final Ry layer

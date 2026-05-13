@@ -13,13 +13,13 @@ class StatevectorEngine(BenchmarkEngine):
         self,
         qasm_circuit: str,
         parameters: Sequence[float],
-        observable: Sequence[str],
+        observable: str,
     ) -> tuple[float, float, None]:
         
         qc = qasm_to_qiskit_bound(qasm_circuit, parameters)
 
-        pauli_str = "".join(reversed(observable))
-        op = SparsePauliOp(pauli_str)
+        # pauli_str = "".join(reversed(observable)).upper()
+        op = SparsePauliOp(observable.upper())
 
         # ----- Timed region -----------------------------------------------
         t0 = time.perf_counter()
