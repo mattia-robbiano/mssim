@@ -99,15 +99,7 @@ graph TD
 # Install in editable mode
 pip install -e .
 
-# Run locally with example settings
-python main.py --settings settings.json \
-               --n_qubits 8 --depth 4 --engine tn \
-               --n_runs 20 --max_bond 32
-
-# Override specific settings
-python main.py --settings settings.json \
-               --engine tn,sv \
-               --output results/custom_output.jsonl
+./scripts/run_simple.sh <settings.json>
 ```
 
 ### Settings JSON Format
@@ -174,7 +166,7 @@ Result row serialization:
 
 ```bash
 # Submit array job
-sbatch script/run_parallel.sh config/settings.json 8 4
+sbatch script/run_parallel.sh <settings.json>
 
 # Job runs with parameters varied across array tasks
 ```
