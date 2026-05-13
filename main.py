@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> None:
     circuit_name: str = model_cfg["circuit"]
     n_qubits: int     = model_cfg["n_qubits"]
     depth: int        = model_cfg["depth"]
-    observable: list[str] | None = model_cfg.get("observable", None)
+    observable: str | None = model_cfg.get("observable", None)
     circuit_kwargs: dict         = model_cfg.get("kwargs", {})
     circuit_kwargs["observable"] = observable
 
