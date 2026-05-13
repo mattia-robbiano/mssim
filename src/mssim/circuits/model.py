@@ -1,7 +1,7 @@
 """
-csbench.circuits.model
+mssim.circuits.model
 =======================
-``CircuitModel`` — the single object passed around the pipeline.
+``CircuitModel`` — the single object passed.
 
 It holds:
 - the circuit definition in a canonical format (QASM string)
@@ -10,24 +10,23 @@ It holds:
 - all circuit-specific metadata (n_qubits, depth, circuit family name, …)
 """
 
+
 from __future__ import annotations
-
-import json
 from dataclasses import dataclass, field
-from typing import Any, Callable, Sequence
-
+from typing import Any, Callable
 import numpy as np
 
 
 @dataclass
 class CircuitModel:
     """
-    Self-contained description of a parameterised quantum circuit experiment.
+    Object containing all the needed information on the model. The core is the qasm object, passed from the circuit builder and the observable.
+    Also parameters name, number of qubit, depth
 
     Parameters
     ----------
     name : str
-        Human-readable circuit family name (e.g. ``"random_clifford"``).
+        Circuit family name (e.g. ``"kicked_ising"``).
     n_qubits : int
         Number of qubits.
     depth : int
@@ -58,32 +57,24 @@ class CircuitModel:
     qasm: str
     observable: list[str]
     n_params: int
-    parameter_sampler: Callable[[], list[float]] = field(
-        default=None,  # type: ignore[assignment]
-        repr=False,
-    )
+    parameter_sampler: Callable[[], list[float]] = field(default=None,repr=False)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+
         if len(self.observable) != self.n_qubits:
-            raise ValueError(
-                f"Observable length ({len(self.observable)}) must equal "
-                f"n_qubits ({self.n_qubits})."
-            )
+            raise ValueError(f"Observable length ({len(self.observable)}) must equal "f"n_qubits ({self.n_qubits}).")
+        
         if self.parameter_sampler is None:
             n = self.n_params
-            self.parameter_sampler = lambda: list(
-                np.random.uniform(0, 2 * np.pi, size=n)
-            )
+            self.parameter_sampler = lambda: list(np.random.uniform(0, 2 * np.pi, size=n))
 
-    # ------------------------------------------------------------------
 
     def sample_parameters(self) -> list[float]:
-        """Return a fresh random parameter vector."""
         return self.parameter_sampler()
 
+
     def to_dict(self) -> dict[str, Any]:
-        """Serialise to a JSON-compatible dict (excluding the sampler)."""
         return {
             "name": self.name,
             "n_qubits": self.n_qubits,
@@ -91,10 +82,10 @@ class CircuitModel:
             "observable": self.observable,
             "n_params": self.n_params,
             "metadata": self.metadata,
-            # QASM omitted by default — potentially large
         }
 
-    def __repr__(self) -> str:  # noqa: D105
+
+    def __repr__(self) -> str:
         return (
             f"CircuitModel(name={self.name!r}, n_qubits={self.n_qubits}, "
             f"depth={self.depth}, n_params={self.n_params})"

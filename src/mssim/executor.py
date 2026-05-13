@@ -1,28 +1,16 @@
 """
 executor
 =================
-The :class:`Executor` orchestrates the benchmark loop:
+The :class:`executor` :
 
-1. Accepts a :class:`~csbench.circuits.model.CircuitModel` and a list of
-   :class:`~csbench.engines.abstract.BenchmarkEngine` instances.
+1. Accepts a :class:`~mssim.circuits.model.CircuitModel` and a list of
+   :class:`~mssim.engines.abstract.BenchmarkEngine` instances.
 2. Runs ``n_runs`` independent trials per engine (each with freshly sampled
    random parameters).
-3. Optionally streams every :class:`~csbench.output.ResultRow` to disk as
+3. Optionally streams every :class:`~mssim.output.ResultRow` to disk as
    it is produced (useful for long cluster jobs).
-4. Returns a :class:`~csbench.output.BatchResult` per engine.
+4. Returns a :class:`~mssim.output.BatchResult` per engine.
 
-Example
--------
->>> from csbench.circuits import build_circuit
->>> from csbench.engines import build_engines
->>> from csbench.executor import Executor
->>>
->>> model = build_circuit("random_rx", n_qubits=6, depth=4)
->>> engines = build_engines(["tn", "sv"], max_bond_dimension=32)
->>> exc = Executor(n_runs=10, output_file="results.jsonl", output_fmt="jsonl")
->>> batch_results = exc.run(model, engines)
->>> for br in batch_results:
-...     print(br.summary())
 """
 
 from __future__ import annotations
@@ -40,9 +28,9 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Executor:
+class executor:
     """
-    Benchmark execution manager.
+    Execution manager.
 
     Parameters
     ----------
@@ -69,10 +57,9 @@ class Executor:
     output_file: str | None = None
     output_fmt: str = "jsonl"
     extra_metadata: dict[str, Any] = field(default_factory=dict)
-    skip_on_error: bool = True
+    skip_on_error: bool = False
     verbose: bool = False
 
-    # ------------------------------------------------------------------
 
     def run(
         self,

@@ -7,7 +7,7 @@ Abstract base class that every simulation engine must implement.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Sequence
 
 
@@ -27,10 +27,6 @@ class BenchmarkEngine(ABC):
     tuple[float, float, float | None]
         ``(expectation_value, elapsed_seconds, fidelity_or_None)``
     """
-
-    # ------------------------------------------------------------------
-    # Subclasses may add their own fields via dataclass inheritance.
-    # ------------------------------------------------------------------
 
     @abstractmethod
     def expectation_value(
@@ -66,21 +62,13 @@ class BenchmarkEngine(ABC):
             for exact engines.
         """
 
-    # ------------------------------------------------------------------
-    # Optional: engines may override for per-engine warm-up / teardown.
-    # ------------------------------------------------------------------
-
     def setup(self) -> None:
         """Called once before any ``expectation_value`` call in a batch."""
 
     def teardown(self) -> None:
         """Called once after all ``expectation_value`` calls in a batch."""
 
-    # ------------------------------------------------------------------
-    # Convenience
-    # ------------------------------------------------------------------
-
     @property
     def name(self) -> str:
-        """Human-readable engine identifier (class name by default)."""
+        """engine identifier (class name by default)."""
         return type(self).__name__

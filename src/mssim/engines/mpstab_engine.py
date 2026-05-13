@@ -1,37 +1,14 @@
-"""
-csbench.engines.mpstab_engine
-==============================
-Engine wrapper for the MPStab / HSMPO framework (Qibo circuits).
-"""
-
-from __future__ import annotations
-
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Sequence
 
-from qibo import Circuit
-
 from mpstab.evolutors.hsmpo import HSMPO
-
 from .abstract import BenchmarkEngine
-
+from mssim.engines.converters import qasm_to_qibo_bound  # <--- Nuova importazione
 
 @dataclass
 class MPStabEngine(BenchmarkEngine):
-    """
-    Simulation engine based on the MPStab Hybrid Stabiliser MPO (HSMPO).
-
-    Parameters
-    ----------
-    max_bond_dimension:
-        Maximum bond dimension for the MPO truncation.
-        ``None`` means no truncation (exact up to floating-point).
-    """
-
     max_bond_dimension: int | None = None
-
-    # ------------------------------------------------------------------
 
     def expectation_value(
         self,
@@ -39,17 +16,9 @@ class MPStabEngine(BenchmarkEngine):
         parameters: Sequence[float],
         observable: Sequence[str],
     ) -> tuple[float, float, float | None]:
-        """
-        Compute ⟨O⟩ via the HSMPO surrogate.
-
-        Returns
-        -------
-        expval : float
-        elapsed : float   (seconds, HSMPO contraction only)
-        fidelity : float  (truncation fidelity at zero replacement probability)
-        """
-        circuit = Circuit.from_qasm(qasm_circuit)
-        circuit.set_parameters(list(parameters))
+        
+        # Usa il convertitore centralizzato
+        circuit = qasm_to_qibo_bound(qasm_circuit, parameters)
 
         surrogate = HSMPO(circuit, max_bond_dimension=self.max_bond_dimension)
 

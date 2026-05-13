@@ -3,16 +3,14 @@ circuits.library
 =========================
 Factory functions for named circuit families.
 
-Each function returns a :class:`~csbench.circuits.model.CircuitModel` that is
+Each function returns a :class:`~mssim.circuits.model.CircuitModel` that is
 ready to be passed to the executor.
 
 Supported families
 ------------------
-- ``random_clifford``  — random single-/two-qubit Clifford brick-layer circuit
-- ``random_rx``        — brick-layer of random Rx rotations + CNOT entangling
-- ``ising``            — transverse-field Ising Trotter circuit
-- ``qaoa``             — QAOA circuit on a 1-D ring with ZZ + X mixer
-- ``hardware_efficient`` — hardware-efficient ansatz (Ry + CZ)
+- ``kicked_ising``
+- ``ising``
+- ``hardware_efficient``
 
 All circuits are expressed in OpenQASM 2.0 with *numeric* gate parameters
 (the QASM string is valid stand-alone) and expose a ``parameter_sampler``
@@ -22,22 +20,14 @@ Adding a new family
 -------------------
 1.  Write a function ``build_<name>(n_qubits, depth, **kwargs) -> CircuitModel``.
 2.  Register it in :data:`CIRCUIT_REGISTRY` at the bottom of this file.
-3.  Done — the factory :func:`build_circuit` will pick it up automatically.
+3.  Done — the factory :func:`build_circuit` should pick it up automatically.
 """
 
 from __future__ import annotations
-
 import textwrap
 from typing import Any, Callable
-
 import numpy as np
-
-from .model import CircuitModel
-
-
-# ---------------------------------------------------------------------------
-# QASM helpers
-# ---------------------------------------------------------------------------
+from mssim.circuits.model import CircuitModel
 
 
 def _qasm_header(n_qubits: int) -> str:
@@ -48,70 +38,93 @@ def _qasm_header(n_qubits: int) -> str:
         creg c[{n_qubits}];
     """)
 
-
 def _uniform_sampler(n: int) -> Callable[[], list[float]]:
     """Return a sampler of *n* angles drawn uniformly from [0, 2π)."""
     return lambda: list(np.random.uniform(0.0, 2 * np.pi, size=n))
 
 
-# ---------------------------------------------------------------------------
-# Random Rx+CNOT brick-layer
-# ---------------------------------------------------------------------------
-
-
-def build_random_rx(
-    n_qubits: int,
-    depth: int,
+def build_kicked_ising(
+    n_qubits: int, 
+    depth: int, 
+    J: float = 1.0, 
+    h: float = 0.5, 
+    b: float = 0.5,
     observable: list[str] | None = None,
-    **kwargs: Any,
 ) -> CircuitModel:
     """
-    Brick-layer circuit: alternating layers of random Rx rotations and a
-    staircase of CNOT gates.
+    Generates a CircuitModel for the forward-time Kicked Ising Floquet circuit.
+    
+    The period consists of an even and odd layer of symmetric U blocks.
+    Parameters (J, h, b) are fixed.
 
     Parameters
     ----------
     n_qubits:
-        Number of qubits.
+        Total number of qubits in the 1D chain.
     depth:
-        Number of (Rx-layer + CNOT-layer) repetitions.
+        Number of Floquet periods (t).
+    J, h, b:
+        Theoretical Ising coupling, longitudinal field, and transverse kick strengths.
     observable:
-        Pauli observable.  Defaults to all-Z.
+        Defaults to all-Z.
     """
+    if n_qubits < 2:
+        raise ValueError("The Floquet circuit requires at least 2 qubits.")
+    
     if observable is None:
         observable = ["Z"] * n_qubits
 
     lines = [_qasm_header(n_qubits)]
-    n_params = n_qubits * depth  # one Rx per qubit per depth layer
-    angles = np.zeros(n_params)  # placeholder; will be replaced each run
+    
+    # Map physical parameters to QASM rotation angles
+    theta_J = 2.0 * J
+    theta_h = 2.0 * h
+    theta_b = 2.0 * b
+    
+    def apply_u_block(q_n: int, q_n1: int):
+        """Constructs the symmetric U_{n, n+1} block."""
+        # 1. RZ(2h) on bottom wire
+        lines.append(f"rz({theta_h:.6f}) q[{q_n}];")
+        
+        # 2. RZZ(2J) decomposed
+        lines.append(f"cx q[{q_n}], q[{q_n1}];")
+        lines.append(f"rz({theta_J:.6f}) q[{q_n1}];")
+        lines.append(f"cx q[{q_n}], q[{q_n1}];")
+        
+        # 3. RX(2b) on both wires
+        lines.append(f"rx({theta_b:.6f}) q[{q_n}];")
+        lines.append(f"rx({theta_b:.6f}) q[{q_n1}];")
+        
+        # 4. RZZ(2J) decomposed
+        lines.append(f"cx q[{q_n}], q[{q_n1}];")
+        lines.append(f"rz({theta_J:.6f}) q[{q_n1}];")
+        lines.append(f"cx q[{q_n}], q[{q_n1}];")
+        
+        # 5. RZ(2h) on bottom wire
+        lines.append(f"rz({theta_h:.6f}) q[{q_n}];")
 
-    param_idx = 0
-    for _ in range(depth):
-        for q in range(n_qubits):
-            lines.append(f"rx({angles[param_idx]:.6f}) q[{q}];")
-            param_idx += 1
-        # Nearest-neighbour CNOT staircase
-        for q in range(0, n_qubits - 1, 2):
-            lines.append(f"cx q[{q}], q[{q + 1}];")
-        for q in range(1, n_qubits - 1, 2):
-            lines.append(f"cx q[{q}], q[{q + 1}];")
+    # Construct the Floquet stroboscopic evolution
+    for layer in range(depth):
+        lines.append(f"// --- Floquet Period {layer + 1} ---")
+        
+        # Even sub-layer
+        for i in range(0, n_qubits - 1, 2):
+            apply_u_block(i, i + 1)
+            
+        # Odd sub-layer
+        for i in range(1, n_qubits - 1, 2):
+            apply_u_block(i, i + 1)
 
     return CircuitModel(
-        name="random_rx",
+        name="kicked_ising",
         n_qubits=n_qubits,
         depth=depth,
         qasm="\n".join(lines),
         observable=observable,
-        n_params=n_params,
-        parameter_sampler=_uniform_sampler(n_params),
-        metadata={"entangler": "cx"},
+        n_params=0,                         # no random rotations to parametrize to collect statistics
+        parameter_sampler=lambda: [],       # we are not sampling, nothing random in this circut
+        metadata={"J": J, "h": h, "b": b},
     )
-
-
-# ---------------------------------------------------------------------------
-# Transverse-field Ising Trotter circuit
-# ---------------------------------------------------------------------------
-
 
 def build_ising(
     n_qubits: int,
@@ -161,7 +174,6 @@ def build_ising(
         for q in range(n_qubits):
             lines.append(f"rx({x_angle:.6f}) q[{q}];")
 
-    # No free parameters — return a constant sampler
     return CircuitModel(
         name="ising",
         n_qubits=n_qubits,
@@ -172,12 +184,6 @@ def build_ising(
         parameter_sampler=lambda: [],
         metadata={"J": J, "h": h, "dt": dt},
     )
-
-
-# ---------------------------------------------------------------------------
-# Hardware-efficient ansatz (Ry + CZ)
-# ---------------------------------------------------------------------------
-
 
 def build_hardware_efficient(
     n_qubits: int,
@@ -213,7 +219,6 @@ def build_hardware_efficient(
         offset = d % 2
         for q in range(offset, n_qubits - 1, 2):
             lines.append(f"cz q[{q}], q[{q + 1}];")
-    # Final rotation layer
     for q in range(n_qubits):
         lines.append(f"ry({angles[param_idx]:.6f}) q[{q}];")
         param_idx += 1
@@ -230,83 +235,11 @@ def build_hardware_efficient(
     )
 
 
-# ---------------------------------------------------------------------------
-# QAOA on 1-D ring (ZZ cost + X mixer)
-# ---------------------------------------------------------------------------
-
-
-def build_qaoa(
-    n_qubits: int,
-    depth: int,
-    observable: list[str] | None = None,
-    **kwargs: Any,
-) -> CircuitModel:
-    """
-    QAOA ansatz for the 1-D ring Max-Cut problem.
-
-    ``depth`` QAOA layers, each with one ``γ`` (cost) and one ``β`` (mixer)
-    parameter.  Total free parameters: ``2 * depth``.
-
-    Parameters
-    ----------
-    n_qubits:
-        Number of qubits / vertices.
-    depth:
-        Number of QAOA layers (``p`` in the standard notation).
-    observable:
-        Defaults to ZZ on the first edge.
-    """
-    if observable is None:
-        obs = ["I"] * n_qubits
-        obs[0] = "Z"
-        if n_qubits > 1:
-            obs[1] = "Z"
-        observable = obs
-
-    lines = [_qasm_header(n_qubits)]
-    n_params = 2 * depth  # [γ_0, β_0, γ_1, β_1, …]
-    angles = np.zeros(n_params)
-
-    # Initial |+⟩^n
-    for q in range(n_qubits):
-        lines.append(f"h q[{q}];")
-
-    for p in range(depth):
-        gamma = angles[2 * p]
-        beta = angles[2 * p + 1]
-        # Cost layer: ZZ on ring edges
-        for q in range(n_qubits):
-            nxt = (q + 1) % n_qubits
-            lines.append(f"cx q[{q}], q[{nxt}];")
-            lines.append(f"rz({2 * gamma:.6f}) q[{nxt}];")
-            lines.append(f"cx q[{q}], q[{nxt}];")
-        # Mixer layer: X rotations
-        for q in range(n_qubits):
-            lines.append(f"rx({2 * beta:.6f}) q[{q}];")
-
-    return CircuitModel(
-        name="qaoa",
-        n_qubits=n_qubits,
-        depth=depth,
-        qasm="\n".join(lines),
-        observable=observable,
-        n_params=n_params,
-        parameter_sampler=_uniform_sampler(n_params),
-        metadata={"topology": "ring", "problem": "max_cut"},
-    )
-
-
-# ---------------------------------------------------------------------------
-# Registry and factory
-# ---------------------------------------------------------------------------
-
 CIRCUIT_REGISTRY: dict[str, Any] = {
-    "random_rx":          build_random_rx,
+    "kicked-ising":       build_kicked_ising,
     "ising":              build_ising,
     "hardware_efficient": build_hardware_efficient,
-    "qaoa":               build_qaoa,
 }
-
 
 def build_circuit(
     name: str,
@@ -315,7 +248,7 @@ def build_circuit(
     **kwargs: Any,
 ) -> CircuitModel:
     """
-    Instantiate a :class:`~csbench.circuits.model.CircuitModel` by family name.
+    Instantiate a :class:`~mssim.circuits.model.CircuitModel` by family name.
 
     Parameters
     ----------

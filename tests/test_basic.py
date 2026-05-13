@@ -159,14 +159,14 @@ def test_batch_result_summary():
 
 
 def test_unknown_engine():
-    from mssim.engines.registry import build_engines
+    from mssim.engines.library import build_engines
 
     with pytest.raises(KeyError, match="not_an_engine"):
         build_engines(["not_an_engine"])
 
 
 def test_build_engines_empty_list():
-    from mssim.engines.registry import build_engines
+    from mssim.engines.library import build_engines
 
     engines = build_engines([])
     assert engines == []

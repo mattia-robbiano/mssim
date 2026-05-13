@@ -6,6 +6,7 @@ authors = [{ name = "MR^2" }]
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "kahypar>=1.3.7",
     "mpstab",
     "numpy>=2.2.6",
     "qibo>=0.2.19",

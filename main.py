@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
 """
+Note:
 
-Usage
------
-    python main.py --settings config/example_settings.json \\
-                   --n_qubits 8 --depth 4 --engine tn \\
-                   [--n_runs 20] [--max_bond 32] [--run_id 0]
+python main.py --settings config/example_settings.json \\
+                --n_qubits 8 --depth 4 --engine tn \\
+                [--n_runs 20] [--max_bond 32] [--run_id 0]
 
 All CLI arguments override the corresponding values in the settings file,
-so the SLURM launcher only needs to pass the parameters that vary across
-array tasks (typically ``--n_qubits``, ``--depth``, ``--engine``).
+so SLURM only needs to pass the parameters that vary across
+array tasks (like ``--n_qubits``, ``--depth``, ``--engine``).
 """
 
 from __future__ import annotations
-
 import argparse
 import json
 import logging
 import os
-import socket
 import sys
 import time
+
+from mssim.circuits.library import build_circuit
+from mssim.engines.library import build_engines
+from mssim.executor import executor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,104 +77,108 @@ def load_settings(path: str) -> dict:
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
-def merge(settings: dict, args: argparse.Namespace) -> dict:
-    """Apply CLI overrides on top of the settings dict."""
-    cfg = dict(settings)  # shallow copy for safety
 
-    # Model overrides
-    cfg.setdefault("model", {})
+def merge_args(settings: dict, args: argparse.Namespace) -> dict:
+    """
+        Ensures the format of the settings dictonary is correct and applies command line overrides on top of the settings dictionary
+    """
+    cfg = dict(settings)            # shallow copy to ensure the format is correct
+    cfg.setdefault("model", {})     # prevent errors in case of misconfiguration
+    cfg.setdefault("execution", {})
+    cfg.setdefault("output", {})
+    
     if args.n_qubits is not None:
         cfg["model"]["n_qubits"] = args.n_qubits
     if args.depth is not None:
         cfg["model"]["depth"] = args.depth
-
-    # Execution overrides
-    cfg.setdefault("execution", {})
     if args.engine is not None:
         cfg["execution"]["engines"] = args.engine.split(",")
     if args.n_runs is not None:
         cfg["execution"]["n_runs"] = args.n_runs
     if args.max_bond is not None:
         cfg["execution"]["max_bond_dimension"] = args.max_bond
-
-    # Output overrides
-    cfg.setdefault("output", {})
     if args.output is not None:
         cfg["output"]["filename"] = args.output
 
     return cfg
 
+
 def main(argv: list[str] | None = None) -> None:
-    
-    args = parse_args(argv)
-    settings = merge(load_settings(args.settings), args)
 
-    model_cfg = settings["model"]
+    """
+        Parses command-line arguments, loads settings, calls the subroutines building the circuit, setup the simulator, the output writing and runs.
+    
+        Args:
+            argv (list[str] | None): Optional list of command-line arguments. If None, uses sys.argv.
+    """
+    # TODO observable should not be in circuit_kwargs
+    
+
+    # Arguments can come both from the json setting file and from the command line (in the bash script). The latter have priority.
+    # Calling parse_args for getting the arguments in json file as a dictionary and merging it with the command line ones.
+    # The arguments are then used to build the model, the engines and the output directory.
+    args        = parse_args(argv)
+    settings    = merge_args(load_settings(args.settings), args)
+
+    model_cfg         = settings["model"]
     circuit_name: str = model_cfg["circuit"]
-    n_qubits: int = model_cfg["n_qubits"]
-    depth: int = model_cfg["depth"]
+    n_qubits: int     = model_cfg["n_qubits"]
+    depth: int        = model_cfg["depth"]
     observable: list[str] | None = model_cfg.get("observable", None)
-    
-    circuit_kwargs: dict = model_cfg.get("kwargs", {})
+    circuit_kwargs: dict         = model_cfg.get("kwargs", {})
     circuit_kwargs["observable"] = observable
-
-    from src.mssim.circuits.library import build_circuit
-    from src.mssim.engines.registry import build_engines
-    from src.mssim.executor import Executor
-
 
     logger.info("Building circuit '%s' — n_qubits=%d, depth=%d", circuit_name, n_qubits, depth)
     model = build_circuit(circuit_name, n_qubits=n_qubits, depth=depth, **circuit_kwargs)
 
-    # ---- Build engines ---------------------------------------------------
-    exec_cfg = settings["execution"]
+    exec_cfg               = settings["execution"]
     engine_keys: list[str] = exec_cfg.get("engines", ["all"])
-    max_bond: int | None = exec_cfg.get("max_bond_dimension", None)
-    n_runs: int = exec_cfg.get("n_runs", 1)
+    max_bond: int | None   = exec_cfg.get("max_bond_dimension", None)
+    n_runs: int            = exec_cfg.get("n_runs", 1)
 
     logger.info("Building engines: %s (max_bond=%s)", engine_keys, max_bond)
     engines = build_engines(engine_keys, max_bond_dimension=max_bond)
 
-    # ---- Output ----------------------------------------------------------
-    out_cfg = settings["output"]
+    out_cfg          = settings["output"]
     output_file: str = out_cfg.get("filename", "results.jsonl")
-    output_fmt: str = out_cfg.get("format", "jsonl")
+    output_fmt: str  = out_cfg.get("format", "jsonl")
     os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
 
-    # ---- Extra metadata: SLURM / host context ----------------------------
+
+    # Extra stuff for logging and possible later use. Maybe not useful.
     extra_metadata = {
         "slurm_task_id": args.run_id,
-        "hostname": socket.gethostname(),
-        "settings_file": os.path.abspath(args.settings),
-        "launch_time": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        # SLURM env vars (present only inside a job)
-        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
-        "slurm_array_job_id": os.environ.get("SLURM_ARRAY_JOB_ID"),
+        "settings_file":       os.path.abspath(args.settings),
+        "launch_time":         time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "slurm_job_id":        os.environ.get("SLURM_JOB_ID"),
+        "slurm_array_job_id":  os.environ.get("SLURM_ARRAY_JOB_ID"),
         "slurm_array_task_id": os.environ.get("SLURM_ARRAY_TASK_ID"),
     }
 
-    # ---- Run -------------------------------------------------------------
-    executor = Executor(
+
+    # Build the executor object, containing informations for statistics to be collected, output and parameters.
+    # run is called on executor, with the chosen model and engines.
+    # Results are stored in batch_result structure. 
+    exe = executor(
         n_runs=n_runs,
         output_file=output_file,
         output_fmt=output_fmt,
         extra_metadata=extra_metadata,
-        skip_on_error=True,
+        skip_on_error=False,
         verbose=True,
     )
+    logger.info("Starting execution: %d engine(s) × %d run(s) → %s",len(engines), n_runs, output_file,)
+    batch_results = exe.run(model, engines)
 
-    logger.info(
-        "Starting benchmark: %d engine(s) × %d run(s) → %s",
-        len(engines), n_runs, output_file,
-    )
-    batch_results = executor.run(model, engines)
 
-    # ---- Print summary table to stdout -----------------------------------
     print("\n" + "=" * 72)
-    print(f"{'BENCHMARK SUMMARY':^72}")
+    print(f"{'EXECUTION SUMMARY':^72}")
     print("=" * 72)
+    
     for br in batch_results:
+        
         s = br.summary()
+        
         print(
             f"\n  Engine : {s['engine']}\n"
             f"  Circuit: {s['circuit']}  n_qubits={s['n_qubits']}  depth={s['depth']}\n"
@@ -182,8 +187,10 @@ def main(argv: list[str] | None = None) -> None:
             f"  Time   : {s['elapsed_mean_s']:.4f} s ± {s['elapsed_std_s']:.4f} s  "
             f"(total {s['elapsed_total_s']:.2f} s)"
         )
+        
         if "fidelity_mean" in s:
             print(f"  Fidelity: {s['fidelity_mean']:.6f} ± {s['fidelity_std']:.6f}")
+    
     print("=" * 72 + "\n")
 
     logger.info("Done. Results written to '%s'.", output_file)

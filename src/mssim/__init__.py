@@ -11,7 +11,7 @@ __version__ = "0.1.0"
 # Core API
 from .circuits.model import CircuitModel
 from .circuits.library import build_circuit
-from .engines.registry import build_engines
+from .engines.library import build_engines
 from .executor import Executor
 
 __all__ = [

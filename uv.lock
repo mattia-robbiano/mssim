@@ -767,6 +767,31 @@ wheels = [
 ]
 
 [[package]]
+name = "kahypar"
+version = "1.3.7"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/76/9508f86e4a15f732dc250599c00b1233a04d57ddcc2aed3822e4ced2a29f/kahypar-1.3.7-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:f77ff7ead4c37c338f83370fac7d7a587789c09f79cfbd06b63285f9ae951400", size = 1073820, upload-time = "2026-03-05T06:49:14.911Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/69/92f30438700af9646b63537eed752e16f37a4a09898ca034676d35e77eee/kahypar-1.3.7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ff660dc9c01ff9fa2e072cf639ca4961368f338a6440051541bbd5f5df35064b", size = 896475, upload-time = "2026-03-05T06:49:16.205Z" },
+    { url = "https://files.pythonhosted.org/packages/90/ef/5b7f7fa0027517d8be2b717698b976188ab5d066c37200f5a26e5c8f960e/kahypar-1.3.7-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9bbd04a0f525eac4bb1f9dcfcb3ff316e57ebfeef45179b2d2f15229a753de46", size = 1277563, upload-time = "2026-03-05T06:49:17.396Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/61/113d63a545b195423b927c74c967e6c96bc7f8626ac9a624e00ce86235d2/kahypar-1.3.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:019e8ad2d48051280f29e6ce782b6a00e07e49c84ca7594bccd782e26ab5f156", size = 1410479, upload-time = "2026-03-05T06:49:18.602Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/b6/0d63407aaecbc3afd94dbf0489093f471ea53958619911dd639ba1e4184f/kahypar-1.3.7-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:8bc1e3a098400b884a0e6fcc380fe1fba80189504e9148c9f2ad41708fa82a89", size = 2350090, upload-time = "2026-03-05T06:49:20.305Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/bc/1ef843d523885dd604962013883391bf5dd72484b5f528538fafe2adb4e8/kahypar-1.3.7-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:eae9825a8ae3533f79839cafeeeebc2f798b583168bf1ea37c102fa74b12f344", size = 2559708, upload-time = "2026-03-05T06:49:22.134Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/ab/8e22eeffe9429091f3f3cd8893df8ef967aabf02a29d2225b9ce6bfe3940/kahypar-1.3.7-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:177246a9cafb1c3c516c3fe3a60232688f88adcf1c551785be8e204c1524c807", size = 1059173, upload-time = "2026-03-05T06:49:23.791Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/88/5276e178ee6e8031c10033a1c4167e795f8e1e7bf35e298d05ed20a539b0/kahypar-1.3.7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:473e26b909e2f3bb8716b6bb618cff772d0c09f280025b3f21a79d3ebe899678", size = 897035, upload-time = "2026-03-05T06:49:25.685Z" },
+    { url = "https://files.pythonhosted.org/packages/17/17/13372542d379825595f0220c22e6243db947a8aeb9fbcbd3de3a23df0ae4/kahypar-1.3.7-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:969a9e0b78e375ea235243fb1a7d1491ce3494fb941bc6446ce88d7986ecfdfb", size = 1274873, upload-time = "2026-03-05T06:49:26.974Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/a3/0b774720aabfd13729306c89b7db1551a32f1cc006d8f872540c8dae50fd/kahypar-1.3.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:0dce7a14b55efceeb8d66fd457981ffd32a255137fb33f680a143e199fddf846", size = 1410164, upload-time = "2026-03-05T06:49:28.72Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/85/e6aa57ff95260729d8e2ac2d2bd832ca5ce86540e2f9dd535303900eb01e/kahypar-1.3.7-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:b4a8a616fccd10c2b6e756711466908024594d9778ca173605363663b3557b1b", size = 2352035, upload-time = "2026-03-05T06:49:30.018Z" },
+    { url = "https://files.pythonhosted.org/packages/32/64/ab4c7388343cee0f59b976e09ccc1211921875d1bc9b023a163ac791abd0/kahypar-1.3.7-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:7c26148a39dd6077257afd90cbe10cba6ac73f80bf80fa590ec600c3ce8dfa76", size = 2560610, upload-time = "2026-03-05T06:49:32.115Z" },
+    { url = "https://files.pythonhosted.org/packages/98/d1/08ba72c10e634f1829d6cb28b972acd83a79061be3151ebba2680c77be72/kahypar-1.3.7-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:0c37e09f7598d7b6111f9cfd038095397ef0fe07523dfdc91add165b8aa31aae", size = 1059217, upload-time = "2026-03-05T06:49:33.7Z" },
+    { url = "https://files.pythonhosted.org/packages/48/a0/5429411bb6fbc279c574fae2f404439b13c037587305babfb83ea05b1b0e/kahypar-1.3.7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:dbc9d08e4278f683f1d7d57f75205bb801f589e62fd296afd03f7453b6516f30", size = 897113, upload-time = "2026-03-05T06:49:34.938Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/b8/8d64239c11c69aac5a3614b21b3cd84867afe30c4172de049b20d5173cc6/kahypar-1.3.7-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:8dee612d201434e2bcfd02fa318e5b59329b683fc106d8d812b372f979f5a042", size = 1274996, upload-time = "2026-03-05T06:49:36.694Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/b3/ae616300dafc8534fba5497dace380350ec5cb96ebcf4d43fc1ece94013b/kahypar-1.3.7-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:fe8034e7f4c75dbec324340e1999b1a2516e61b44792f7d8a7cd81349e032b74", size = 1410096, upload-time = "2026-03-05T06:49:38.018Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/55/9253513aaa01ec7a34118863e89eb46edfa16c8d0b140fa489b3bad2f3e6/kahypar-1.3.7-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:0bb730e3004311578909bfd60efd06c397077ed1a2a03eee4f05f508fca8759e", size = 2351832, upload-time = "2026-03-05T06:49:40Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/3d/50f4aa7a89d5b023e8caf3432edc2fc8c2012af579199539a6a2555349a7/kahypar-1.3.7-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:349eed80dcc6633e43c3a62aea8de3b75546e37644735fdb516c6a35abea4ae1", size = 2560731, upload-time = "2026-03-05T06:49:41.843Z" },
+]
+
+[[package]]
 name = "kiwisolver"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1065,6 +1090,7 @@ name = "mssim"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "kahypar" },
     { name = "mpstab" },
     { name = "numpy" },
     { name = "qibo" },
@@ -1083,6 +1109,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "kahypar", specifier = ">=1.3.7" },
     { name = "mpstab", editable = "../mpstab" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "qibo", specifier = ">=0.2.19" },
