@@ -8,26 +8,6 @@ A quantum circuit classical simulation package supporting multiple simulation en
 pip install -e .
 ```
 
-## Quick Start
-
-```python
-from mssim import build_circuit, build_engines, Executor
-
-# Create a circuit model
-model = build_circuit("random_rx", n_qubits=6, depth=4)
-
-# Set up simulation engines
-engines = build_engines(["tn", "sv"], max_bond_dimension=32)
-
-# Run simulations and collect results
-executor = Executor(n_runs=10, output_file="results.jsonl", output_fmt="jsonl")
-batch_results = executor.run(model, engines)
-
-# View results
-for br in batch_results:
-    print(br.summary())
-```
-
 ## Project Structure
 
 ```
