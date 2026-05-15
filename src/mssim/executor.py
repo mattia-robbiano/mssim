@@ -1,7 +1,5 @@
 """
 executor
-=================
-The :class:`executor` :
 
 1. Accepts a :class:`~mssim.circuits.model.CircuitModel` and a list of
    :class:`~mssim.engines.abstract.BenchmarkEngine` instances.
@@ -10,7 +8,6 @@ The :class:`executor` :
 3. Optionally streams every :class:`~mssim.output.ResultRow` to disk as
    it is produced (useful for long cluster jobs).
 4. Returns a :class:`~mssim.output.BatchResult` per engine.
-
 """
 
 from __future__ import annotations
@@ -36,19 +33,24 @@ class executor:
     ----------
     n_runs : int
         Number of independent random-parameter trials per (engine, circuit).
+    
     output_file : str | None
         If provided, every :class:`ResultRow` is written to this file as
         it is produced (streaming mode).  Set to ``None`` to accumulate
         results in memory only.
+    
     output_fmt : str
         ``"jsonl"`` or ``"hdf5"``.  Ignored when *output_file* is ``None``.
+    
     extra_metadata : dict
         Key-value pairs merged into every :class:`ResultRow`'s metadata dict.
         Useful for injecting SLURM job IDs, host names, etc.
+    
     skip_on_error : bool
         If ``True``, exceptions raised by an engine are logged and skipped
         rather than re-raised.  Allows a run to continue even when one
         engine fails.
+    
     verbose : bool
         If ``True``, log progress at INFO level for every trial.
     """
@@ -84,29 +86,26 @@ class executor:
         batch_results: list[BatchResult] = []
 
         for engine in engines:
+
             logger.info("Starting engine '%s' for circuit '%s'.", engine.name, model.name)
-            engine.setup()
+
             rows: list[ResultRow] = []
-
             for run_id in range(self.n_runs):
-                params = model.sample_parameters()
 
-                if self.verbose:
-                    logger.info(
-                        "  [%s] run %d/%d …", engine.name, run_id + 1, self.n_runs
-                    )
+
+                if self.verbose: logger.info("  [%s] run %d/%d …", engine.name, run_id + 1, self.n_runs)
 
                 try:
+                    params = model.sample_parameters()
+                    qasm_circuit = model.bind_parameters(params)
+                    observable = model.observable if isinstance(model.observable, str) else "".join(model.observable)
                     expval, elapsed, fidelity = engine.expectation_value(
-                        qasm_circuit=model.qasm,
-                        parameters=params,
-                        observable=model.observable,
+                        qasm_circuit=qasm_circuit,
+                        observable=observable,
                     )
-                except Exception:  # noqa: BLE001
+                except Exception:
                     tb = traceback.format_exc()
-                    logger.error(
-                        "Engine '%s' failed on run %d:\n%s", engine.name, run_id, tb
-                    )
+                    logger.error("Engine '%s' failed on run %d:\n%s", engine.name, run_id, tb)
                     if self.skip_on_error:
                         continue
                     raise
@@ -119,24 +118,16 @@ class executor:
                     depth=model.depth,
                     n_params=model.n_params,
                     parameters=params,
-                    observable=model.observable,
+                    observable=list(observable),
                     expectation_value=float(expval),
                     elapsed_seconds=float(elapsed),
                     fidelity=float(fidelity) if fidelity is not None else None,
                     metadata={**model.metadata, **self.extra_metadata},
                 )
                 rows.append(row)
-
-                if self.output_file is not None:
-                    save_result(self.output_file, row, fmt=self.output_fmt)
-
-            engine.teardown()
-            logger.info(
-                "Finished engine '%s': %d/%d successful runs.",
-                engine.name,
-                len(rows),
-                self.n_runs,
-            )
+                if self.output_file is not None: save_result(self.output_file, row, fmt=self.output_fmt)
+            
+            logger.info("Finished engine '%s': %d/%d successful runs.",engine.name,len(rows),self.n_runs)
 
             batch_results.append(
                 BatchResult(
