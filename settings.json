@@ -1,23 +1,21 @@
 {
-  "_comment": "mssim settings file — all fields may be overridden via CLI flags in run.sh",
-
   "model": {
     "circuit": "kicked-ising",
-    "n_qubits": 6,
-    "depth": 2,
-    "observable": "zzzzzz",
+    "n_qubits": 4,
+    "depth": 1,
+    "observable": "zzzz",
     "kwargs": {}
   },
 
   "execution": {
-    "engines": ["sv", "tn"],
+    "engines": ["sv", "tn", "mpstab"],
     "n_runs": 1,
     "max_bond_dimension": 16
   },
 
   "sweep": {
-    "n_qubits": [6],
-    "depth":    [2]
+    "n_qubits": [4],
+    "depth":    [1]
   },
 
   "output": {
