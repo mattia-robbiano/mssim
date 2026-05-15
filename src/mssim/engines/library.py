@@ -2,9 +2,9 @@ from __future__ import annotations
 from typing import Any
 
 from mssim.engines.abstract import BenchmarkEngine
-from mssim.engines.quimb_engine import QuimbEngine
-from mssim.engines.mpstab_engine import MPStabEngine
-from mssim.engines.statevector_engine import StatevectorEngine
+from mssim.engines.quimb import QuimbEngine
+from mssim.engines.mpstab import MPStabEngine
+from mssim.engines.qiskit import StatevectorEngine
 
 ENGINES = {
     "tn": QuimbEngine,

@@ -10,6 +10,8 @@ Supported families
 ------------------
 - ``kicked_ising``
 - ``ising``
+- ``random_rx``
+- ``qaoa``
 - ``hardware_efficient``
 
 All circuits are expressed in OpenQASM 2.0 with *numeric* gate parameters
@@ -43,12 +45,16 @@ def _uniform_sampler(n: int) -> Callable[[], list[float]]:
     return lambda: list(np.random.uniform(0.0, 2 * np.pi, size=n))
 
 
+def _parameter_placeholder(index: int) -> str:
+    return f"__PARAM_{index}__"
+
+
 def build_kicked_ising(
     n_qubits: int, 
     depth: int, 
-    J: float = 1.0, 
-    h: float = 0.5, 
-    b: float = 0.5,
+    J: float = 1.5, 
+    h: float = 0.7, 
+    b: float = 0.7,
     observable: str | None = None,
 ) -> CircuitModel:
     """
@@ -129,7 +135,7 @@ def build_kicked_ising(
 def build_ising(
     n_qubits: int,
     depth: int,
-    J: float = 1.0,
+    J: float = 1.5,
     h: float = 0.5,
     dt: float = 0.1,
     observable: str | None = None,
@@ -185,6 +191,80 @@ def build_ising(
         metadata={"J": J, "h": h, "dt": dt},
     )
 
+
+def build_random_rx(
+    n_qubits: int,
+    depth: int,
+    observable: str | None = None,
+    **kwargs: Any,
+) -> CircuitModel:
+    """Random Rx ansatz with one free angle per qubit and layer."""
+    if observable is None:
+        observable = "Z" * n_qubits
+
+    lines = [_qasm_header(n_qubits)]
+    n_params = n_qubits * depth
+    param_idx = 0
+
+    for _ in range(depth):
+        for q in range(n_qubits):
+            lines.append(f"rx({_parameter_placeholder(param_idx)}) q[{q}];")
+            param_idx += 1
+
+    return CircuitModel(
+        name="random_rx",
+        n_qubits=n_qubits,
+        depth=depth,
+        qasm="\n".join(lines),
+        observable=observable,
+        n_params=n_params,
+        parameter_sampler=_uniform_sampler(n_params),
+        metadata={"rotation": "rx"},
+    )
+
+
+def build_qaoa(
+    n_qubits: int,
+    depth: int,
+    observable: str | None = None,
+    **kwargs: Any,
+) -> CircuitModel:
+    """Simple QAOA-style circuit with one cost angle and one mixer angle per layer."""
+    if observable is None:
+        observable = "Z" * n_qubits
+
+    lines = [_qasm_header(n_qubits)]
+    for q in range(n_qubits):
+        lines.append(f"h q[{q}];")
+
+    n_params = 2 * depth
+    param_idx = 0
+
+    for _ in range(depth):
+        gamma_placeholder = _parameter_placeholder(param_idx)
+        beta_placeholder = _parameter_placeholder(param_idx + 1)
+
+        for q in range(n_qubits - 1):
+            lines.append(f"cx q[{q}], q[{q + 1}];")
+            lines.append(f"rz({gamma_placeholder}) q[{q + 1}];")
+            lines.append(f"cx q[{q}], q[{q + 1}];")
+
+        for q in range(n_qubits):
+            lines.append(f"rx({beta_placeholder}) q[{q}];")
+
+        param_idx += 2
+
+    return CircuitModel(
+        name="qaoa",
+        n_qubits=n_qubits,
+        depth=depth,
+        qasm="\n".join(lines),
+        observable=observable,
+        n_params=n_params,
+        parameter_sampler=_uniform_sampler(n_params),
+        metadata={"cost": "nearest-neighbor-chain", "mixer": "rx"},
+    )
+
 def build_hardware_efficient(
     n_qubits: int,
     depth: int,
@@ -209,18 +289,17 @@ def build_hardware_efficient(
 
     lines = [_qasm_header(n_qubits)]
     n_params = n_qubits * (depth + 1)  # +1 for the final Ry layer
-    angles = np.zeros(n_params)
 
     param_idx = 0
     for d in range(depth):
         for q in range(n_qubits):
-            lines.append(f"ry({angles[param_idx]:.6f}) q[{q}];")
+            lines.append(f"ry({_parameter_placeholder(param_idx)}) q[{q}];")
             param_idx += 1
         offset = d % 2
         for q in range(offset, n_qubits - 1, 2):
             lines.append(f"cz q[{q}], q[{q + 1}];")
     for q in range(n_qubits):
-        lines.append(f"ry({angles[param_idx]:.6f}) q[{q}];")
+        lines.append(f"ry({_parameter_placeholder(param_idx)}) q[{q}];")
         param_idx += 1
 
     return CircuitModel(
@@ -238,6 +317,8 @@ def build_hardware_efficient(
 CIRCUIT_REGISTRY: dict[str, Any] = {
     "kicked-ising":       build_kicked_ising,
     "ising":              build_ising,
+    "random_rx":          build_random_rx,
+    "qaoa":               build_qaoa,
     "hardware_efficient": build_hardware_efficient,
 }
 

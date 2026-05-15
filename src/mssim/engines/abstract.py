@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Sequence
 
 
 @dataclass
@@ -28,13 +27,13 @@ class BenchmarkEngine(ABC):
         ``(expectation_value, elapsed_seconds, fidelity_or_None)``
     """
 
+
     @abstractmethod
     def expectation_value(
         self,
         qasm_circuit: str,
-        parameters: Sequence[float],
-        observable: Sequence[str],
-    ) -> tuple[float, float, float | None]:
+        observable: str,
+    ) -> tuple[float, float, float]:
         """
         Compute ⟨ψ|O|ψ⟩ for the parametrised circuit.
 
@@ -61,12 +60,8 @@ class BenchmarkEngine(ABC):
             Truncation / approximation fidelity where applicable; ``None``
             for exact engines.
         """
+        pass
 
-    def setup(self) -> None:
-        """Called once before any ``expectation_value`` call in a batch."""
-
-    def teardown(self) -> None:
-        """Called once after all ``expectation_value`` calls in a batch."""
 
     @property
     def name(self) -> str:
