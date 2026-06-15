@@ -19,7 +19,14 @@ class QiskitPauliPropagationEngine(BenchmarkEngine):
     ) -> tuple[float, float, float | None]:
 
         qiskit_circuit = QuantumCircuit.from_qasm_str(qasm_circuit)
-        qiskit_observable = SparsePauliOp(observable.upper())
+        if observable.upper() == "MAGNETIZATION":
+            num_qubits = qiskit_circuit.num_qubits
+            qiskit_observable = SparsePauliOp(
+                [i*'I'+'Z'+(num_qubits-i-1)*'I' for i in range(num_qubits)],
+                num_qubits*[1],
+            )
+        else:
+            qiskit_observable = SparsePauliOp(observable.upper())
 
         t0 = time.perf_counter()
 

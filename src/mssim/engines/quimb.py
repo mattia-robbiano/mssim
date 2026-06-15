@@ -101,18 +101,27 @@ class QuimbEngine(BenchmarkEngine):
         t0 = time.perf_counter()
         quimb_circuit = _qibo_circuit_to_quimb(qibo_circ=qibo_circuit, max_bond=self.max_bond_dimension)
         psi_ket = quimb_circuit.psi
-        psi_op = psi_ket.copy()
         
         norm = psi_ket.norm(squared=True).real
-        non_identity = {i: op.upper() for i, op in enumerate(observable)if op.upper() != "I"}
+        if observable.upper() == "MAGNETIZATION":
+            num_qubits = qibo_circuit.nqubits
+            observable = [i*'I'+'Z'+(num_qubits-i-1)*'I' for i in range(num_qubits)]
+        else:
+            observable = [observable]
 
-        for site, label in non_identity.items():
-            psi_op.gate_(pauli(label), site)
+        expval = 0
+        for pauli_string in observable:
+            psi_bra = psi_ket.copy().H
+            psi_op = psi_ket.copy()
 
-        expval = (psi_ket.H & psi_op).contract(optimize=self.contraction_optimizer).real / norm
+            non_identity = {i: op.upper() for i, op in enumerate(pauli_string) if op.upper() != "I"}
+            for site, label in non_identity.items():
+                psi_op.gate_(pauli(label), site)
+
+            expval += (psi_bra & psi_op).contract(optimize=self.contraction_optimizer).real / norm
         elapsed = time.perf_counter() - t0
 
-        quimb_circuit = _qibo_circuit_to_quimb(qibo_circ=qibo_circuit, max_bond=self.max_bond_dimension)
+        #quimb_circuit = _qibo_circuit_to_quimb(qibo_circ=qibo_circuit, max_bond=self.max_bond_dimension)
         fidelity = quimb_circuit.fidelity_estimate()
 
         return float(expval), elapsed, float(fidelity)

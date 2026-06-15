@@ -120,7 +120,7 @@ class executor:
                     max_terms=int(engine.max_terms) if hasattr(engine, "max_terms") else None,
                     n_params=model.n_params,
                     parameters=params,
-                    observable=list(observable),
+                    observable=observable,
                     expectation_value=float(expval),
                     elapsed_seconds=float(elapsed),
                     fidelity=float(fidelity) if fidelity is not None else None,
