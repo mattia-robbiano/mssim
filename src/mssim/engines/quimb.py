@@ -107,7 +107,8 @@ class QuimbEngine(BenchmarkEngine):
             num_qubits = qibo_circuit.nqubits
             observable = [i*'I'+'Z'+(num_qubits-i-1)*'I' for i in range(num_qubits)]
         else:
-            observable = [observable]
+            # Match the qubit-ordering convention of qiskit
+            observable = [observable[::-1]]
 
         expval = 0
         for pauli_string in observable:

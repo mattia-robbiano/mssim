@@ -25,7 +25,8 @@ class MPStabEngine(BenchmarkEngine):
             num_qubits = circuit.nqubits
             observable = SymbolicHamiltonian(sum(Z(i) for i in range(num_qubits)))
         else:
-            observable = observable.upper()
+            # Match the qubit-ordering convention of qiskit
+            observable = observable[::-1]
 
         t0 = time.perf_counter()
         expval = mpstab_hsmpo.expectation(observable=observable)
