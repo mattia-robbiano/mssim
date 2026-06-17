@@ -1,0 +1,82 @@
+{
+    "model": {
+        "n_qubits": 10,
+        "depth": 5,
+        "circuit": "kicked_ising",
+        "observable": "magnetization",
+        "kwargs": {
+            "J": 0.7853981633974483,
+            "h": 0.0,
+            "b": 0.6981317
+        }
+    },
+    "execution": {
+        "max_bond_dimension": 10
+    },
+    "axis": {
+        "x": {
+            "field_name": "engine",
+            "exclude_values": []
+        },
+        "y": {
+            "field_name": "expectation_value",
+            "exclude_values": []
+        },
+        "hue": {
+            "field_name": "b",
+            "exclude_values": []
+        }
+    },
+    "hue_stylings": {
+        "engine": [
+            {
+                "value": "qiskit",
+                "linestyle": "-",
+                "marker": "o",
+                "color": "#2196F3"
+            },
+            {
+                "value": "mpstab",
+                "linestyle": "--",
+                "marker": "s",
+                "color": "#E53935"
+            },
+            {
+                "value": "quimb",
+                "linestyle": ":",
+                "marker": "^",
+                "color": "#43A047"
+            },
+            {
+                "value": "pauliprop",
+                "linestyle": "-.",
+                "marker": "D",
+                "color": "#FB8C00"
+            }
+        ],
+        "b": [
+            {
+                "value": 0.0,
+                "linestyle": "-.",
+                "marker": "D",
+                "color": "#FB8C00"
+            }
+        ]
+    },
+    "input": {
+        "rel_path": "results",
+        "filename": "*.jsonl"
+    },
+    "output": {
+        "data": {
+            "rel_path": "plot/data",
+            "filename": "{date}_{time}",
+            "format": "csv"
+        },
+        "plot": {
+            "rel_path": "plot/plot_results",
+            "filename": "{date}_{time}",
+            "format": "png"
+        }
+    }
+}
