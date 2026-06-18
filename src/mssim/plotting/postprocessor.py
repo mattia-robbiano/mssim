@@ -64,7 +64,7 @@ class MSSIMPlotPostProcessor:
             if val is None:
                 df = df[df[col].isna()]
             else:
-                df = df[df[col] == val]
+                df = df[(df[col] == val) | (df[col].isna())]
 
         # Exclude values on dynamic axes if specified
         for col, excludes in exclude_map.items():

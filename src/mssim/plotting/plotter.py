@@ -1,12 +1,53 @@
-import matplotlib.pyplot as plt
+from __future__ import annotations
+
+from collections.abc import Mapping
+
 import pandas as pd
+import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+import scienceplots
+
+plt.style.use(['science','no-latex'])
 
 def style_ax(ax: plt.Axes, x_col: str, y_label: str, df: pd.DataFrame) -> None:
     if df[x_col].dtype.kind in "iu":
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.set_xlabel(x_col.replace("_", " ").capitalize(), fontsize=11)
-    ax.set_ylabel(y_label, fontsize=11)
+    ax.set_xlabel(x_col.replace("_", " ").capitalize(), fontsize=14)
+    ax.set_ylabel(y_label, fontsize=14)
+
+def _stringify_value(value: object) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, (int, float)):
+        return f"{value:g}"
+    if isinstance(value, (list, tuple, set)):
+        return "[" + ", ".join(_stringify_value(item) for item in value) + "]"
+    return str(value)
+
+def _flatten_settings(prefix: str, value: object, excluded_fields: set[str]) -> list[str]:
+    if not isinstance(value, Mapping):
+        return [f"{prefix}={_stringify_value(value)}"]
+
+    flattened: list[str] = []
+    for key, item in value.items():
+        key_str = str(key)
+        if key_str in excluded_fields:
+            continue
+
+        if isinstance(item, Mapping):
+            flattened.extend(_flatten_settings(key_str, item, excluded_fields))
+        else:
+            flattened.append(f"{key_str}={_stringify_value(item)}")
+
+    return flattened
+
+def _wrap_title(parts: list[str], group_size: int = 4) -> str:
+    return "\n".join(
+        ", ".join(parts[index : index + group_size])
+        for index in range(0, len(parts), group_size)
+    ) + "\n"
 
 
 class MSSIMPlotter:
@@ -40,6 +81,20 @@ class MSSIMPlotter:
                 f"Missing required columns for plotting: x='{x_col}', y='{y_col}'"
             )
 
+        axis_cfg = self.settings.get("axis", {})
+        excluded_fields = {
+            str(cfg.get("field_name"))
+            for cfg in axis_cfg.values()
+            if isinstance(cfg, Mapping) and cfg.get("field_name") is not None
+        }
+
+        title_parts = []
+        for section_name in ("model", "execution"):
+            section = self.settings.get(section_name, {})
+            flattened = _flatten_settings(section_name, section, excluded_fields)
+            if flattened:
+                title_parts.extend(flattened)
+
         fig, ax = plt.subplots(figsize=(8, 6))
 
         style = {"linestyle": "-", "marker": "o", "color": None}
@@ -48,7 +103,7 @@ class MSSIMPlotter:
             hues = df[hue_col].unique()
 
             hue_stylings = self.settings.get("hue_stylings", {}).get(str(hue_col), [])
-            hue_styling_cfg = {style.pop("value"): style for style in hue_stylings}
+            hue_styling_cfg = {style_def.pop("value"): style_def for style_def in hue_stylings}
 
             # Sort hues so they appear consistently in legend
             for hue_val in sorted(hues, key=lambda val: str(val)):
@@ -72,7 +127,10 @@ class MSSIMPlotter:
         # Apply general axis styling from old plotting utilities
         style_ax(ax, x_col, y_col.replace("_", " ").capitalize(), df)
 
-        fig.tight_layout()
+        if title_parts:
+            ax.set_title(_wrap_title(title_parts), fontsize=15)
+
+        # fig.tight_layout()
 
         return fig
 
