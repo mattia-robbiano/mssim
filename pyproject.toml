@@ -57,6 +57,7 @@ dependencies = [
     "quimb==1.12.1",
     "rustworkx==0.17.1",
     "scipy==1.17.0",
+    "scienceplots==2.1.1",
     "six==1.17.0",
     "SQLAlchemy==2.0.46",
     "stevedore==5.7.0",
